@@ -3,185 +3,188 @@ import matplotlib.pyplot as plt
 import copy
 
 class Perceptron:
-    def __init__(self, input_size):
-        self.weights = [random.uniform(-1, 1) for _ in range(input_size)]
+    def __init__(self, tam_entrada, peso_bajo=-1, peso_alto=1):
+        self.pesos = [random.uniform(peso_bajo, peso_alto) for _ in range(tam_entrada)]
         self.bias = random.uniform(-1, 1)
 
-    def predict(self, inputs):
-        activation = sum(w * x for w, x in zip(self.weights, inputs)) + self.bias
+    def predict(self, entradas):
+        activation = sum(w * x for w, x in zip(self.pesos, entradas)) + self.bias
         return 1 if activation >= 0 else 0
 
-    def train(self, inputs, target, learning_rate=0.1):
-        prediction = self.predict(inputs)
-        error = target - prediction
-        self.weights = [w + learning_rate * error * x for w, x in zip(self.weights, inputs)]
-        self.bias += learning_rate * error
+    def train(self, entradas, objetivo, coef_aprendizaje):
+        prediccion = self.predict(entradas)
+        error = objetivo - prediccion
+        self.pesos = [w + coef_aprendizaje * error * x for w, x in zip(self.pesos, entradas)]
+        self.bias += coef_aprendizaje * error
 
-def generate_random_points(num_points, x_range, y_range):
-    return [(random.uniform(*x_range), random.uniform(*y_range)) for _ in range(num_points)]
 
-def plot_points(points, color, label=None):
-    x = [point[0] for point in points]
-    y = [point[1] for point in points]
+def dibuja_puntos(puntos, color, label=None):
+    x = [punto[0] for punto in puntos]
+    y = [punto[1] for punto in puntos]
     plt.scatter(x, y, color=color, label=label)
 
-def plot_decision_boundary(perceptron):
-    if perceptron.weights[1] == 0:
-        return
-    slope = -perceptron.weights[0] / perceptron.weights[1]
-    intercept = -perceptron.bias / perceptron.weights[1]
-    x = [-10, 10]
-    y = [slope * xi + intercept for xi in x]
-    plt.plot(x, y, color='black')
 
-def generate_regions():
+def genera_regiones():
     print("Ingrese las coordenadas de los puntos que delimitan la región A:")
     xa, ya = map(float, input("Punto 1 (xa, ya): ").split())
     xb, yb = map(float, input("Punto 2 (xb, yb): ").split())
+    
     print("Ingrese las coordenadas de los puntos que delimitan la región B:")
     xc, yc = map(float, input("Punto 3 (xc, yc): ").split())
     xd, yd = map(float, input("Punto 4 (xd, yd): ").split())
-    region_A = [(random.uniform(xa, xb), random.uniform(ya, yb)) for _ in range(num_points_per_class)]
-    region_B = [(random.uniform(xc, xd), random.uniform(yc, yd)) for _ in range(num_points_per_class)]
+    
+    puntos_en_A = [(random.uniform(xa, xb), random.uniform(ya, yb)) for _ in range(puntos_por_clase)]
+    puntos_en_B = [(random.uniform(xc, xd), random.uniform(yc, yd)) for _ in range(puntos_por_clase)]
+    
     # Guardar los puntos que delimitan las regiones A y B en una lista
-    points_A = [(xa, ya), (xb, yb)]
-    points_B = [(xc, yc), (xd, yd)]
-    save_points_to_file(points_A, 'points_A.txt')
-    save_points_to_file(points_B, 'points_B.txt')
-    return region_A, region_B
+    region_A = [(xa, ya), (xb, yb)]
+    region_B = [(xc, yc), (xd, yd)]
+    
+    guarda_puntos(region_A, 'region_A.txt')
+    guarda_puntos(region_B, 'region_B.txt')
+    
+    return puntos_en_A, puntos_en_B
 
-def generate_random_points_in_region(region, num_points):
-    x_values = [point[0] for point in region]
-    y_values = [point[1] for point in region]
-    x_min, x_max = min(x_values), max(x_values)
-    y_min, y_max = min(y_values), max(y_values)
-    return [(random.uniform(x_min, x_max), random.uniform(y_min, y_max)) for _ in range(num_points)]
 
-def save_points_to_file(points, filename):
-    with open(filename, 'w') as f:
-        for point in points:
-            f.write(f"{point[0]}, {point[1]}\n")
+def genera_puntos_aleatorios_en_region(region, num_puntos):
+    x = [punto[0] for punto in region]
+    y = [punto[1] for punto in region]
+    
+    x_min, x_max = min(x), max(x)
+    y_min, y_max = min(y), max(y)
+    
+    return [(random.uniform(x_min, x_max), random.uniform(y_min, y_max)) for _ in range(num_puntos)]
 
-def load_points_from_file(filename):
-    with open(filename, 'r') as f:
-        points = [tuple(map(float, line.strip().split(','))) for line in f]
-    return points
 
-def train_perceptron(region_A, region_B):
-    class1_points = region_A
-    class2_points = region_B
+def guarda_puntos(puntos, nombre_archivo):
+    with open(nombre_archivo, 'w') as f:
+        for punto in puntos:
+            f.write(f"{punto[0]}, {punto[1]}\n")
 
-    perceptrons = [Perceptron(input_size=2)]
-    for i in range(num_iterations):
-        for point in class1_points + class2_points:
-            inputs = point
-            target = 1 if point in class1_points else 0
-            perceptrons[-1].train(inputs, target, learning_rate)
+def carga_puntos(nombre_archivo):
+    with open(nombre_archivo, 'r') as f:
+        puntos = [tuple(map(float, line.strip().split(','))) for line in f]
+    return puntos
+
+
+def train_perceptron(puntos_en_A, puntos_en_B):
+    clase1 = puntos_en_A
+    clase2 = puntos_en_B
+
+    perceptrons = [Perceptron(tam_entrada=2)]
+    for i in range(num_iteraciones):
+        for punto in clase1 + clase2:
+            entradas = punto
+            objetivo = 1 if punto in clase1 else 0
+            perceptrons[-1].train(entradas, objetivo, coef_aprendizaje)
         # Guardar el estado del perceptrón después de cada iteración
         perceptrons.append(copy.deepcopy(perceptrons[-1]))
 
     return perceptrons
 
-def plot_decision_boundary(perceptron, linestyle, label=None):
-    if perceptron.weights[1] == 0:
+
+def dibuja_linea_decision(perceptron, linestyle, label=None):
+    if perceptron.pesos[1] == 0:
         return
-    slope = -perceptron.weights[0] / perceptron.weights[1]
-    intercept = -perceptron.bias / perceptron.weights[1]
-    x = [-10, 10]
-    y = [slope * xi + intercept for xi in x]
+    m = -perceptron.pesos[0] / perceptron.pesos[1]      # Pendiente
+    b = -perceptron.bias / perceptron.pesos[1]          # Ordenada al origen
+    x = [-10, 10]                                       # Dominio
+    y = [m * xi + b for xi in x]                        # Ecuación de la recta
     plt.plot(x, y, linestyle=linestyle, color='black', label=label)
 
-def plot_with_decision_boundary(region_A, region_B, perceptrons, option):
+
+def dibuja_entrenamiento(puntos_en_A, puntos_en_B, perceptrons, opcion):
     plt.clf()
-    plot_points(region_A, color='blue', label='Clase 1')
-    plot_points(region_B, color='red', label='Clase 2')
+    dibuja_puntos(puntos_en_A, color='blue', label='Clase 1')
+    dibuja_puntos(puntos_en_B, color='red', label='Clase 2')
     
-    if option == "2":  # Opción 2: inicio y final
-        plot_decision_boundary(perceptrons[0], linestyle='--', label='Inicio')
-        plot_decision_boundary(perceptrons[-1], linestyle='-', label='Final')
+    if opcion == "2":  # Opción 2: inicio y final
+        dibuja_linea_decision(perceptrons[0], linestyle='--', label='Inicio')
+        dibuja_linea_decision(perceptrons[-1], linestyle='-', label='Final')
         plt.legend()
-    elif option == "1":  # Opción 1: 4 estados
+    elif opcion == "1":  # Opción 1: 4 estados
         num_states = 4
         step = len(perceptrons) // num_states
         for i in range(num_states):
             linestyle = '--' if i == 0 else '-' if i == num_states - 1 else '-.'
-            plot_decision_boundary(perceptrons[i * step], linestyle=linestyle, label=f'Estado {i+1}')
+            dibuja_linea_decision(perceptrons[i * step], linestyle=linestyle, label=f'Estado {i+1}')
 
         plt.legend()
         
-    plt.xlim(*x_range)
-    plt.ylim(*y_range)
+    plt.xlim(*x_lim)
+    plt.ylim(*y_lim)
     plt.xlabel('X')
     plt.ylabel('Y')
-    plt.title('Perceptrón para clasificación de puntos en el plano')
+    plt.title('Reconocimiento con un perceptrón')
     plt.show()
 
-def plot_with_decision_boundary_and_points(region_A, region_B, perceptron):
+
+def dibuja_reconocimiento_aleatorios(puntos_en_A, puntos_en_B, perceptron):
     plt.clf()
-    plot_points(region_A, color='blue', label='Clase 1')
-    plot_points(region_B, color='red', label='Clase 2')
-    plot_decision_boundary(perceptron, linestyle='-', label='Perceptrón')
+    dibuja_puntos(puntos_en_A, color='blue', label='Clase 1')
+    dibuja_puntos(puntos_en_B, color='red', label='Clase 2')
+    dibuja_linea_decision(perceptron, linestyle='-', label='Perceptrón')
     plt.legend()
-    plt.xlim(*x_range)
-    plt.ylim(*y_range)
+    plt.xlim(*x_lim)
+    plt.ylim(*y_lim)
     plt.xlabel('X')
     plt.ylabel('Y')
-    plt.title('Perceptrón para clasificación de puntos en el plano')
+    plt.title('Reconocimiento con un perceptrón')
     plt.show()
 
-def evaluate_recognition(perceptron, test_points, region_A_test):
-    correct_predictions = 0
-    for point in test_points:
-        inputs = point
-        target = 1 if point in region_A_test else 0
-        prediction = perceptron.predict(inputs)
-        if prediction == target:
-            correct_predictions += 1
-    recognition_percentage = (correct_predictions / len(test_points)) * 100
-    return recognition_percentage
 
-def change_parameters():
-    global learning_rate, num_iterations
-    learning_rate = float(input("Ingrese el nuevo coeficiente de aprendizaje: "))
-    num_iterations = int(input("Ingrese el nuevo número de iteraciones: "))
+def evalua_reconocimiento(perceptron, puntos_en_A_prueba, puntos_en_B_prueba):
+    puntos_de_prueba = puntos_en_A_prueba + puntos_en_B_prueba
+
+    predicciones_correctas_A = 0
+    
+    for punto in puntos_de_prueba:
+        entradas = punto
+        objetivo = 1 if punto in puntos_en_A_prueba else 0
+        prediccion = perceptron.predict(entradas)
+        if prediccion == objetivo:
+            predicciones_correctas_A += 1
+    
+    a = (predicciones_correctas_A / len(puntos_de_prueba)) * 100
+
+    predicciones_correctas_B = 0
+    
+    for punto in puntos_de_prueba:
+        entradas = punto
+        objetivo = 1 if punto in puntos_en_B_prueba else 0
+        prediccion = perceptron.predict(entradas)
+        if prediccion == objetivo:
+            predicciones_correctas_B += 1
+    
+    b = (predicciones_correctas_B / len(puntos_de_prueba)) * 100
+
+    if(a > b): return a 
+    else: return b
 
 
-def evaluate_manual_recognition(perceptron, num_points_per_class):
-    if perceptron is None:
-        print("Primero debe entrenar el perceptrón.")
-        return
-
-    test_points_A = []
-    test_points_B = []
+def evalua_recon_manual(perceptron, puntos_por_clase):
+    puntos_prueba_A = []
+    puntos_prueba_B = []
     
     print("Ingrese las coordenadas de los puntos de la Clase 1:")
-    for i in range(num_points_per_class):
+    for i in range(puntos_por_clase):
         x, y = map(float, input(f"Ingrese las coordenadas del punto {i+1} (x, y): ").split())
-        test_points_A.append((x, y))
+        puntos_prueba_A.append((x, y))
         
     print("Ingrese las coordenadas de los puntos de la Clase 2:")
-    for i in range(num_points_per_class):
+    for i in range(puntos_por_clase):
         x, y = map(float, input(f"Ingrese las coordenadas del punto {i+1} (x, y): ").split())
-        test_points_B.append((x, y))
-
-    correct_predictions = 0
-    total_points = num_points_per_class * 2
+        puntos_prueba_B.append((x, y))
     
-    # Evaluación de todos los puntos
-    for point in test_points_A + test_points_B:
-        inputs = point
-        prediction = perceptron.predict(inputs)
-        # Si la predicción es correcta, incrementamos correct_predictions
-        if (point in test_points_A and prediction == 1) or (point in test_points_B and prediction == 0):
-            correct_predictions += 1
+    recognition_percentage = evalua_reconocimiento(perceptron, puntos_prueba_A, puntos_prueba_B)
 
-    recognition_percentage = (correct_predictions / total_points) * 100
-    print(f"Porcentaje de reconocimiento: {recognition_percentage:.2f}%")
+    print(f"\nPorcentaje de reconocimiento: {recognition_percentage:.2f}%")
     
     # Plot de los puntos ingresados manualmente con sus clases
-    plot_points(test_points_A, color='blue', label='Clase 1')
-    plot_points(test_points_B, color='red', label='Clase 2')
-    plot_decision_boundary(perceptron, linestyle='-', label='Perceptrón')
+    dibuja_puntos(puntos_prueba_A, color='blue', label='Clase 1')
+    dibuja_puntos(puntos_prueba_B, color='red', label='Clase 2')
+    dibuja_linea_decision(perceptron, linestyle='-', label='Perceptrón')
+    
     plt.legend()
     plt.xlabel('X')
     plt.ylabel('Y')
@@ -189,12 +192,22 @@ def evaluate_manual_recognition(perceptron, num_points_per_class):
     plt.show()
 
 
+def cambia_parametros():
+    global coef_aprendizaje, num_iteraciones, peso_bajo, peso_alto
+    coef_aprendizaje = float(input("Ingrese el nuevo coeficiente de aprendizaje: "))
+    num_iteraciones = int(input("Ingrese el nuevo número de iteraciones para el entrenamiento: "))
+    peso_bajo = float(input("Ingrese el nuevo límite inferior para la generación de pesos del neurón: "))
+    peso_alto = float(input("Ingrese el nuevo límite superior para la generación de pesos del neurón: "))
+
+
 # Parámetros
-num_points_per_class = 10
-x_range = (-10, 10)
-y_range = (-10, 10)
-learning_rate = 0.1
-num_iterations = 100
+puntos_por_clase = 10
+x_lim = (-10, 10)
+y_lim = (-10, 10)
+coef_aprendizaje = 0.1
+num_iteraciones = 100
+peso_bajo = -1  # Límite inferior para la generación de pesos del neurón
+peso_alto = 1   # Límite superior para la generación de pesos del neurón
 
 perceptron = None
 
@@ -206,81 +219,103 @@ while True:
     print("3. Reconocimiento")
     print("4. Cambio de Parámetros")
     print("5. Salir")
-    option = input("Ingrese el número de la opción que desea ejecutar: ")
+    opcion = input("\nIngrese el número de la opción que desea ejecutar: ")
 
-    if option == "1":
-        num_points = int(input("Ingrese cuántos puntos desea generar en cada región (N): "))
-        print("¿Desea generar nuevas regiones o utilizar las existentes?")
+    if opcion == "1":
+        print("\n¿Desea generar nuevas regiones o utilizar las existentes?")
         print("1. Generar nuevas regiones")
         print("2. Utilizar existentes (si no hay existentes, generará nuevas)")
         region_option = input("Ingrese el número de la opción: ")
+        
         if region_option == "1":
-            region_A, region_B = generate_regions()
-            save_points_to_file(region_A, 'region_A.txt')
-            save_points_to_file(region_B, 'region_B.txt')
+            puntos_por_clase = int(input("\nIngrese cuántos puntos desea generar en cada región (N): "))
+            puntos_en_A, puntos_en_B = genera_regiones()
+            guarda_puntos(puntos_en_A, 'puntos_en_A.txt')
+            guarda_puntos(puntos_en_B, 'puntos_en_B.txt')
         elif region_option == "2":
             try:
-                region_A = load_points_from_file('region_A.txt')
-                region_B = load_points_from_file('region_B.txt')
+                region_A = carga_puntos('region_A.txt')
+                region_B = carga_puntos('region_B.txt')
+                puntos_por_clase = int(input("\nIngrese cuántos puntos desea generar en cada región (N): "))
+
+                puntos_en_A = genera_puntos_aleatorios_en_region(region_A, puntos_por_clase)
+                puntos_en_B = genera_puntos_aleatorios_en_region(region_B, puntos_por_clase)
+
+                guarda_puntos(puntos_en_A, 'puntos_en_A.txt')
+                guarda_puntos(puntos_en_B, 'puntos_en_B.txt')
+            
             except FileNotFoundError:
-                print("Generando nuevas regiones...")
-                region_A, region_B = generate_regions()
-                save_points_to_file(region_A, 'region_A.txt')
-                save_points_to_file(region_B, 'region_B.txt')
-    elif option == "2":
+                
+                print("\nGenerando nuevas regiones...")
+                puntos_por_clase = int(input("\nIngrese cuántos puntos desea generar en cada región (N): "))
+                puntos_en_A, puntos_en_B = genera_regiones()
+                guarda_puntos(puntos_en_A, 'puntos_en_A.txt')
+                guarda_puntos(puntos_en_B, 'puntos_en_B.txt')
+    
+    elif opcion == "2":
         try:
-            region_A = load_points_from_file('region_A.txt')
-            region_B = load_points_from_file('region_B.txt')
-            perceptron = train_perceptron(region_A, region_B)
-            print("¿Desea graficar 4 estados del entrenamiento o solo inicio y final?")
+            puntos_en_A = carga_puntos('puntos_en_A.txt')
+            puntos_en_B = carga_puntos('puntos_en_B.txt')
+            perceptron = train_perceptron(puntos_en_A, puntos_en_B)
+            
+            print("\n¿Desea graficar 4 estados del entrenamiento o solo inicio y final?")
             print("1. 4 estados")
             print("2. Inicio y final")
-            train_option = input("Ingrese el número de la opción: ")
+            
+            train_option = input("\nIngrese el número de la opción: ")
+            
             if train_option == "1":
-                plot_with_decision_boundary(region_A, region_B, perceptron, option="1")
+                dibuja_entrenamiento(puntos_en_A, puntos_en_B, perceptron, opcion="1")
             elif train_option == "2":
-                plot_with_decision_boundary(region_A, region_B, perceptron, option="2")
+                dibuja_entrenamiento(puntos_en_A, puntos_en_B, perceptron, opcion="2")
+        
         except FileNotFoundError:
-            print("Primero debe generar las regiones.")
-    elif option == "3":
+            print("\nPrimero debe generar las regiones.")
+    
+    elif opcion == "3":
         try:
-            points_A = load_points_from_file('points_A.txt')
-            points_B = load_points_from_file('points_B.txt')
+            region_A = carga_puntos('region_A.txt')
+            region_B = carga_puntos('region_B.txt')
 
             if perceptron is None:  # Verificar si no hay perceptrón entrenado
-                print("Primero debe entrenar el perceptrón.")
+                print("\nPrimero debe entrenar el perceptrón.")
                 continue
 
-            print("Seleccione una opción de reconocimiento:")
-            print("1. Ingresar N puntos manualmente")
+            print("\nSeleccione una opción de reconocimiento:")
+            print("1. Ingresar N puntos por clase manualmente")
             print("2. Utilizar puntos de entrenamiento")
             print("3. Utilizar N puntos generados aleatoriamente en las regiones")
 
-            recognition_option = input("Ingrese el número de la opción: ")
+            recognition_option = input("\nIngrese el número de la opción: ")
+            
             if recognition_option == "1":
-                num_points_per_class = int(input("Ingrese el número de puntos (N) por clase: "))
-                evaluate_manual_recognition(perceptron[-1], num_points_per_class)
+                puntos_por_clase = int(input("Ingrese el número de puntos (N) por clase: "))
+                evalua_recon_manual(perceptron[-1], puntos_por_clase)
+            
             elif recognition_option == "2":
-                test_points_A = region_A
-                test_points_B = region_B
-                test_points = test_points_A + test_points_B
-                recognition_percentage = evaluate_recognition(perceptron[-1], test_points, region_A)
-                print(f"Porcentaje de reconocimiento: {recognition_percentage:.2f}%")
+                recognition_percentage = evalua_reconocimiento(perceptron[-1], puntos_en_A, puntos_en_B)
+                print(f"\nPorcentaje de reconocimiento: {recognition_percentage:.2f}%")
+            
             elif recognition_option == "3":
-                num_points = int(input("Ingrese el número de puntos (N) por clase: "))
-                region_A_test = generate_random_points_in_region(points_A, num_points)
-                region_B_test = generate_random_points_in_region(points_B, num_points)
-                test_points = region_A_test + region_B_test
-                recognition_percentage = evaluate_recognition(perceptron[-1], test_points, region_A_test)
-                print(f"Porcentaje de reconocimiento: {recognition_percentage:.2f}%")
-                plot_with_decision_boundary_and_points(region_A_test, region_B_test, perceptron[-1])
+                num_puntos = int(input("Ingrese el número de puntos (N) por clase: "))
+                puntos_en_A_prueba = genera_puntos_aleatorios_en_region(region_A, num_puntos)
+                puntos_en_B_prueba = genera_puntos_aleatorios_en_region(region_B, num_puntos)
+                puntos_de_prueba = puntos_en_A_prueba + puntos_en_B_prueba
+                
+                recognition_percentage = evalua_reconocimiento(perceptron[-1], puntos_en_A_prueba, puntos_en_B_prueba)
+                
+                print(f"\nPorcentaje de reconocimiento: {recognition_percentage:.2f}%")
+                dibuja_reconocimiento_aleatorios(puntos_en_A_prueba, puntos_en_B_prueba, perceptron[-1])
+        
         except FileNotFoundError:
-            print("Primero debe generar las regiones.")
+            print("\nPrimero debe generar las regiones.")
 
-    elif option == "4":
-        change_parameters()
-    elif option == "5":
-        print("¡Hasta luego!")
+    elif opcion == "4":
+        cambia_parametros()
+    
+    elif opcion == "5":
+        print("\n¡Hasta luego!")
         break
+    
     else:
-        print("Opción inválida. Por favor, seleccione una opción válida.")
+        print("\nOpción inválida. Por favor, seleccione una opción válida.")
