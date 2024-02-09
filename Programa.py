@@ -1,3 +1,16 @@
+##########################################
+##      Inteligencia Computacional      ## 
+##########################################
+##    Leslie Janine González Blancas    ##
+##  Eduardo Rodolfo Rodríguez Gallegos  ## 
+##              MCC - INAOE             ##
+##########################################
+##    Última modificación:  09/02/24    ##
+##########################################
+##        Tarea 1 - Perceptrón          ##
+##########################################
+
+
 import random
 import matplotlib.pyplot as plt
 import copy
